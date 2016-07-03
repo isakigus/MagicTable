@@ -1,0 +1,30 @@
+.focused {
+    border-style: solid;
+    border-color: blue;
+}
+
+.magic_table tr th, tr td {
+
+    text-align: center;
+/ / margin: 10 px;
+    padding: 5px;
+}
+
+.magic_table  {
+
+    padding: 5px;
+    margin: 5px;
+    text-align: center;
+}
+
+.magic_title  {
+
+    padding: 5px;
+    color: green;
+
+}
+
+.selected {
+    background-color: green;
+}
+

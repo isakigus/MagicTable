@@ -1,0 +1,254 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+</head>
+
+<body>
+<pre>
+    ToDo:
+    ----------------------------------------------------------------------
+    * onmouse over column name appears two buttons + and - for adding column or removing
+    * add a last column with + and - for adding/removing row
+    * change textareas for input text
+    * apply styles
+    * implement data delivery
+    * replace jquery for native js
+    * do cross-browser testing
+    * be happy hacking
+
+    * create table as object, table id as reference
+    * implement save and refresh data (implement positive lock, with last update).
+    * implement reordering of rows
+    * implement creation of tables
+  </pre>
+<h1 id="h1">hola</h1>
+<div id="magic-table"></div>
+<script>
+
+    var data = {
+        title: 'magic-table',
+        columns: ['uno', 'dos', 'tres'],
+        rows: [
+            [1, 2, 3],
+            [1, 0, 0],
+            [2, 2, 'hola']
+        ],
+        end_point: 'url'
+    };
+
+    function generate_data_from_table() {
+        var data = {};
+        return data;
+    }
+
+    function create_table(data) {
+        var doc = document;
+        var fragment = doc.createDocumentFragment();
+        var num_columns = data.columns.length;
+        //write columns names
+        var tr = doc.createElement("tr");
+        for (idx in data.columns) {
+            var td = doc.createElement("th");
+            td.innerHTML = data.columns[idx];
+            tr.appendChild(td);
+        }
+        fragment.appendChild(tr);
+
+        //fill table with data
+        for (row in data.rows) {
+            var tr = doc.createElement("tr");
+            for (i = 0; i < num_columns; i++) {
+                var td = doc.createElement("td");
+                td.innerHTML = data.rows[row][i];
+                tr.appendChild(td);
+            }
+            //does not trigger reflow
+            fragment.appendChild(tr);
+        }
+        var table = doc.createElement("table");
+        var table_class = "pure-table-bordered";
+
+        table.appendChild(fragment);
+        table.className = table_class;
+        doc.getElementById("magic-table").appendChild(table);
+
+        var add_row_button = doc.createElement("button");
+        add_row_button.innerHTML = "Add row";
+        add_row_button.id = "add_row_button";
+        add_row_button.addEventListener("click", create_row);
+        doc.getElementById("magic-table").appendChild(add_row_button);
+
+        var rm_row_button = doc.createElement("button");
+        rm_row_button.innerHTML = "Remove row";
+        rm_row_button.id = "rm_row_button";
+        rm_row_button.addEventListener("click", remove_row);
+        doc.getElementById("magic-table").appendChild(rm_row_button);
+
+        var add_col_button = doc.createElement("button");
+        add_col_button.innerHTML = "Add col";
+        add_col_button.id = "add_col_button";
+        add_col_button.addEventListener("click", create_column);
+        doc.getElementById("magic-table").appendChild(add_col_button);
+
+        var rm_col_button = doc.createElement("button");
+        rm_col_button.innerHTML = "Remove col";
+        rm_col_button.id = "rm_col_button";
+        rm_col_button.addEventListener("click", remove_column);
+        doc.getElementById("magic-table").appendChild(rm_col_button);
+    }
+
+
+    create_table(data);
+    add_cell_handler();
+
+    //handling cell edition
+    function add_cell_handler() {
+        $("div#magic-table table tr td, div#magic-table table tr th").each(function () {
+
+            $(this).on('click', function edit_td(evt) {
+                $(this).html("<textarea>" + $(this).text() + "</textarea>");
+                //$(this).off('click');
+
+                $("div#magic-table table tr").each(function () {
+
+                    $('td,th', this).each(function () {
+                        $(this).off('click');
+
+                    })
+
+                });
+
+                var html = $(this).find("textarea").val();
+                $(this).find("textarea").focus().val("").val(html);
+                find_text_area_position();
+
+
+                $(this).keyup(function (e) {
+                    if (e.keyCode == 27) { // escape key maps to keycode `27`
+                        var content = $(this).find("textarea").val();
+                        $(this).text(content);
+                        add_cell_handler()
+                        //$(this).on('click', edit_td);
+                    }
+                });
+            })
+        });
+    }
+
+
+    function find_text_area_position() {
+
+        var position = [-1, -1]
+
+        $("div#magic-table table tr").each(function () {
+
+            $('td,th', this).each(function () {
+                var textarea = $(this).find("textarea").val();
+                if (textarea != undefined) {
+                    var col = $(this).parent().children().index($(this));
+                    var row = $(this).parent().parent().children().index($(this).parent());
+
+                    //console.log(textarea + " col:" + col + " row:" + row);
+
+                    position[0] = row;
+                    position[1] = col;
+                }
+
+
+            })
+
+        });
+
+        return position;
+
+    }
+
+
+    function create_row() {
+
+        var div = document.getElementById("magic-table");
+        var table = div.firstElementChild;
+        var num_col = table.rows[0].cells.length;
+
+        var row = table.insertRow(1);
+        for (var i = 0; i < num_col; i++) {
+            var td = document.createElement("td");
+            td.innerHTML = 'fill me';
+            row.appendChild(td);
+
+        }
+        add_cell_handler();
+
+    }
+
+
+    function create_column() {
+
+        var div = document.getElementById("magic-table");
+        var table = div.firstElementChild;
+        var num_rows = table.rows.length;
+
+        var td = document.createElement("th");
+        td.innerHTML = 'fill me';
+        table.rows[0].appendChild(td);
+
+        for (var i = 1; i < num_rows; i++) {
+            var td = document.createElement("td");
+            td.innerHTML = 'fill me';
+            table.rows[i].appendChild(td);
+
+        }
+        add_cell_handler();
+
+
+    }
+
+
+    function remove_column() {
+        var pos = find_text_area_position();
+        var div = document.getElementById("magic-table");
+        var table = div.firstElementChild;
+        var num_rows = table.rows.length;
+
+        for (var i = 0; i < num_rows; i++)
+            table.rows[i].deleteCell(pos[1]);
+
+        add_cell_handler();
+    }
+
+
+    function remove_row() {
+        var pos = find_text_area_position();
+
+        var div = document.getElementById("magic-table");
+        var table = div.firstElementChild;
+        table.deleteRow(pos[0]);
+        add_cell_handler();
+
+    }
+
+
+    function refresh_data() {
+    }
+
+    function save_data() {
+    }
+
+    function change_row_position() {
+    }
+
+    function change_col_position() {
+    }
+
+
+    $("h1").on('click', function (evt) {
+        console.log("hola");
+        $(this).css('color', 'red');
+    })
+</script>
+</body>
+
+</html>
